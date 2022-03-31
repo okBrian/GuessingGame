@@ -1,6 +1,9 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 
+/*
+ * Set UI, Variables, and Sets all labels to '_'
+ */
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -18,11 +21,17 @@ MainWindow::MainWindow(QWidget *parent)
         labels[i]->setText("_");
 }
 
+/*
+ * Delete Heap Allocated Varaibles
+ */
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
+/*
+ * Makes 6 Random Numbers and Appends it to Answer String
+ */
 void MainWindow::makeAnswer()
 {
     for (int i = 0; i < 6; i++)
@@ -35,7 +44,10 @@ void MainWindow::makeAnswer()
     }
 }
 
-void MainWindow::clearColor()
+/*
+ * Reset Color and Labels After Clicking Play Again
+ */
+void MainWindow::resetLabel()
 {
     for (int i = 0; i < labels.length(); i++)
     {
@@ -43,8 +55,13 @@ void MainWindow::clearColor()
         palette.setColor(QPalette::WindowText, Qt::black);
         labels[i]->setPalette(palette);
     }
+    for (int i = 0; i < labels.length(); i++)
+        labels[i]->setText("_");
 }
 
+/*
+ * Checks the Answer and colors it either red(not in answer), yellow(wrong place but in string), and green(correct place and in string)
+ */
 void MainWindow::checkAnswer(const QString &guess, const QString &ans, QLabel *label)
 {
     QColor color;
@@ -69,16 +86,38 @@ void MainWindow::checkAnswer(const QString &guess, const QString &ans, QLabel *l
     label->setPalette(palette);
 }
 
+/*
+ * Reset When clicking user clicks play again
+ */
 void MainWindow::reset()
 {
-    for (int i = 0; i < labels.length(); i++)
-        labels[i]->setText("_");
+    std::thread resetLabel([](QList<QLabel*> labels)
+    {
+        for (int i = 0; i < labels.length(); i++)
+            labels[i]->setText("_");
+    }, labels);
+
+    std::thread resetColor([](QList<QLabel*> labels)
+    {
+        for (int i = 0; i < labels.length(); i++)
+        {
+            QPalette palette = labels[i]->palette();
+            palette.setColor(QPalette::WindowText, Qt::black);
+            labels[i]->setPalette(palette);
+        }
+    }, labels);
+
     guess = 0;
-    clearColor();
     answer = "";
     makeAnswer();
+
+    resetLabel.join();
+    resetColor.join();
 }
 
+/*
+ * If user press buttons checks the guess and checks for error and checks for wins and losses
+ */
 void MainWindow::on_pushButton_clicked()
 {
     bool run = true;
@@ -89,7 +128,6 @@ void MainWindow::on_pushButton_clicked()
             run = false;
     }
     std::string stdGuess = curGuess.toStdString();
-    qDebug() << QString::fromStdString(stdGuess);
     bool isDigit = std::all_of(stdGuess.begin(), stdGuess.end(), ::isdigit);
     if (!isDigit)
     {

@@ -7,8 +7,8 @@
 #include <QList>
 #include <QLabel>
 #include <QString>
-#include <QDebug>
 
+#include <thread>
 #include <random>
 
 QT_BEGIN_NAMESPACE
@@ -27,6 +27,7 @@ private:
     void makeAnswer();
     void clearColor();
     void checkAnswer(const QString &guess, const QString &answer, QLabel *label);
+    void resetLabel();
     void reset();
 private slots:
     void on_pushButton_clicked();
